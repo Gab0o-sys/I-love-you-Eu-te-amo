@@ -235,6 +235,13 @@
             cursor: pointer; transition: all 0.3s; text-align: center; margin-top: 5px;
         }
         #resetConfigBtn:hover { background: rgba(176, 106, 179, 0.6); }
+        #toggleImageBtn {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3);
+            color: white; padding: 6px 10px; border-radius: 12px; font-size: 10px;
+            cursor: pointer; transition: all 0.3s; text-align: center;
+        }
+        #toggleImageBtn:hover { background: rgba(176, 106, 179, 0.6); }
+        #toggleImageBtn.active { background: rgba(176, 106, 179, 0.5); border-color: rgba(255,255,255,0.5); }
     </style>
 </head>
 <body>
@@ -245,6 +252,9 @@
     <div id="configPanel">
         <button id="configBtn" title="Configuración">⚙</button>
         <div id="configContent">
+            <div class="config-section">🖼️ IMAGEN</div>
+            <button id="toggleImageBtn" class="active">👁️ Ocultar imagen</button>
+            
             <div class="config-section">🎨 COLORES</div>
             
             <div class="color-row">
@@ -340,14 +350,12 @@
         
         let currentTrack = 0, isMusicPlaying = false, musicFadeInterval = null;
         
-        // Colores objetivo (hacia donde se interpola)
         let targetHoleColorHex = songThemes[0].color;
         let targetParticleColorHex = songThemes[0].particle;
         let targetNebulaColorHex = songThemes[0].nebula;
         let targetStarsColorHex = songThemes[0].stars;
         let targetSpeedMult = 1.0, targetCamSpeed = 0.15;
         
-        // Colores actuales (interpolados)
         let currentHoleColor = new THREE.Color(targetHoleColorHex);
         let currentParticleColor = new THREE.Color(targetParticleColorHex);
         let currentNebulaColor = new THREE.Color(targetNebulaColorHex);
@@ -376,7 +384,6 @@
             targetSpeedMult = theme.speedMult;
             targetCamSpeed = theme.camSpeed;
             
-            // Actualizar todos los inputs
             holeColorPicker.value = theme.color;
             particleColorPicker.value = theme.particle;
             nebulaColorPicker.value = theme.nebula;
@@ -435,7 +442,7 @@
         btnPrev.addEventListener('click', prevTrack);
         function startMusic() { musicControls.style.display = 'flex'; playCurrentTrack(); }
 
-        // ===================== PANEL DE CONFIGURACIÓN =====================
+        // ===================== PANEL =====================
         const configBtn = document.getElementById('configBtn');
         const configContent = document.getElementById('configContent');
         const holeColorPicker = document.getElementById('holeColorPicker');
@@ -446,46 +453,37 @@
         const speedSlider = document.getElementById('speedSlider');
         const camSpeedSlider = document.getElementById('camSpeedSlider');
         const resetConfigBtn = document.getElementById('resetConfigBtn');
+        const toggleImageBtn = document.getElementById('toggleImageBtn');
         const speedValue = document.getElementById('speedValue');
         const camSpeedValue = document.getElementById('camSpeedValue');
         
         let hideTimeout = null;
         const HIDE_DELAY = 10000;
+        let imageVisible = true;
         
         function updateSliderLabels() {
             speedValue.textContent = parseFloat(speedSlider.value).toFixed(2) + 'x';
             camSpeedValue.textContent = parseFloat(camSpeedSlider.value).toFixed(2);
         }
         
-        function showConfig() {
-            configContent.classList.add('visible');
-            configBtn.style.opacity = '1';
-            resetHideTimer();
-        }
+        function showConfig() { configContent.classList.add('visible'); configBtn.style.opacity = '1'; resetHideTimer(); }
         
         function resetHideTimer() {
             if (hideTimeout) clearTimeout(hideTimeout);
-            hideTimeout = setTimeout(() => {
-                configContent.classList.remove('visible');
-                configBtn.style.opacity = '0';
-            }, HIDE_DELAY);
+            hideTimeout = setTimeout(() => { configContent.classList.remove('visible'); configBtn.style.opacity = '0'; }, HIDE_DELAY);
         }
         
         configBtn.addEventListener('click', () => {
             if (configContent.classList.contains('visible')) {
-                configContent.classList.remove('visible');
-                configBtn.style.opacity = '0';
+                configContent.classList.remove('visible'); configBtn.style.opacity = '0';
                 if (hideTimeout) clearTimeout(hideTimeout);
-            } else {
-                showConfig();
-            }
+            } else { showConfig(); }
         });
         
         configContent.addEventListener('mouseenter', () => { if (hideTimeout) clearTimeout(hideTimeout); });
         configContent.addEventListener('mouseleave', () => { resetHideTimer(); });
         configContent.addEventListener('input', () => { resetHideTimer(); });
         
-        // Color pickers individuales
         holeColorPicker.addEventListener('input', () => { targetHoleColorHex = holeColorPicker.value; resetHideTimer(); });
         particleColorPicker.addEventListener('input', () => { targetParticleColorHex = particleColorPicker.value; resetHideTimer(); });
         nebulaColorPicker.addEventListener('input', () => { targetNebulaColorHex = nebulaColorPicker.value; resetHideTimer(); });
@@ -493,26 +491,30 @@
         
         colorSelect.addEventListener('change', () => {
             const theme = songThemes[colorSelect.selectedIndex];
-            targetHoleColorHex = theme.color;
-            targetParticleColorHex = theme.particle;
-            targetNebulaColorHex = theme.nebula;
-            targetStarsColorHex = theme.stars;
-            targetSpeedMult = theme.speedMult;
-            targetCamSpeed = theme.camSpeed;
-            holeColorPicker.value = theme.color;
-            particleColorPicker.value = theme.particle;
-            nebulaColorPicker.value = theme.nebula;
-            starsColorPicker.value = theme.stars;
-            speedSlider.value = theme.speedMult;
-            camSpeedSlider.value = theme.camSpeed;
-            updateSliderLabels();
-            resetHideTimer();
+            targetHoleColorHex = theme.color; targetParticleColorHex = theme.particle;
+            targetNebulaColorHex = theme.nebula; targetStarsColorHex = theme.stars;
+            targetSpeedMult = theme.speedMult; targetCamSpeed = theme.camSpeed;
+            holeColorPicker.value = theme.color; particleColorPicker.value = theme.particle;
+            nebulaColorPicker.value = theme.nebula; starsColorPicker.value = theme.stars;
+            speedSlider.value = theme.speedMult; camSpeedSlider.value = theme.camSpeed;
+            updateSliderLabels(); resetHideTimer();
         });
         
         speedSlider.addEventListener('input', () => { targetSpeedMult = parseFloat(speedSlider.value); updateSliderLabels(); resetHideTimer(); });
         camSpeedSlider.addEventListener('input', () => { targetCamSpeed = parseFloat(camSpeedSlider.value); updateSliderLabels(); resetHideTimer(); });
-        
         resetConfigBtn.addEventListener('click', () => { applySongTheme(currentTrack); resetHideTimer(); });
+        
+        toggleImageBtn.addEventListener('click', () => {
+            imageVisible = !imageVisible;
+            if (imageVisible) {
+                toggleImageBtn.textContent = '👁️ Ocultar imagen';
+                toggleImageBtn.classList.add('active');
+            } else {
+                toggleImageBtn.textContent = '👁️ Mostrar imagen';
+                toggleImageBtn.classList.remove('active');
+            }
+            resetHideTimer();
+        });
 
         // ===================== 1. ESTRELAS =====================
         const canvas = document.getElementById('starCanvas');
@@ -522,10 +524,7 @@
         const maxStars = 300;
         let animationId;
 
-        function resizeCanvas() {
-            width = window.innerWidth; height = window.innerHeight;
-            canvas.width = width; canvas.height = height;
-        }
+        function resizeCanvas() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; }
         window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
         for (let i = 0; i < maxStars; i++) stars.push({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 2.5 + 0.8, brightness: Math.random() * 0.8 + 0.2, speed: Math.random() * 0.02 + 0.005 });
@@ -595,7 +594,7 @@
             }, 1500);
         });
 
-        // ===================== 3. UNIVERSO 3D =====================
+        // ===================== 3. UNIVERSO =====================
         function startUniverse() {
             startMusic();
             const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050510);
@@ -617,16 +616,10 @@
             bloomPass.threshold = 0.3; bloomPass.strength = 0.5; bloomPass.radius = 0.5;
             const composer = new EffectComposer(renderer); composer.addPass(renderScene); composer.addPass(bloomPass);
 
-            const imageTexture = new THREE.TextureLoader().load('mifoto.png', () => {}, undefined, () => {});
-            const backgroundGeometry = new THREE.PlaneGeometry(40, 40);
-            const backgroundMaterial = new THREE.MeshBasicMaterial({ map: imageTexture, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthTest: false, depthWrite: false });
-            const backgroundImage = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-            backgroundImage.renderOrder = -1; backgroundImage.position.set(0, 0, -30); scene.add(backgroundImage);
-
-            // --- BURACO NEGRO MÁS GRANDE (escala 1.5x) ---
+            // --- BURACO NEGRO ---
             const blackHoleGroup = new THREE.Group();
             const blackHoleCore = new THREE.Group();
-            blackHoleCore.scale.set(1.5, 1.5, 1.5); // ← MÁS GRANDE
+            blackHoleCore.scale.set(1.5, 1.5, 1.5);
             blackHoleGroup.add(blackHoleCore);
 
             const diskMaterial = new THREE.MeshStandardMaterial({ color: 0x9933cc, emissive: new THREE.Color(0x661144), side: THREE.DoubleSide, transparent: true, opacity: 0.9, roughness: 0.3, metalness: 0.1 });
@@ -647,7 +640,27 @@
             const outerDisk = new THREE.Mesh(new THREE.RingGeometry(2.9, 3.5, 128), outerDiskMaterial);
             outerDisk.rotation.x = Math.PI / 2; blackHoleCore.add(outerDisk); allHoleMaterials.push(outerDiskMaterial);
 
-            // Horizonte con depthWrite: true para ocultar palabras detrás
+            // --- IMAGEN DENTRO DEL AGUJERO NEGRO ---
+            const imageTexture = new THREE.TextureLoader().load('mifoto.png', () => {}, undefined, () => {});
+            // Crear un círculo para la imagen
+            const circleGeometry = new THREE.CircleGeometry(1.35, 64); // Radio ligeramente menor que el horizonte (1.4)
+            const circleMaterial = new THREE.MeshBasicMaterial({
+                map: imageTexture,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 1.0,
+                depthTest: false,
+                depthWrite: false
+            });
+            const imageCircle = new THREE.Mesh(circleGeometry, circleMaterial);
+            imageCircle.position.z = 0.01; // Ligeramente delante del horizonte
+            imageCircle.renderOrder = 1;
+            
+            // Grupo para la imagen (para poder rotarla independientemente)
+            const imageGroup = new THREE.Group();
+            imageGroup.add(imageCircle);
+            blackHoleCore.add(imageGroup);
+
             const horizonMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.1, metalness: 0.2, emissive: new THREE.Color(0x110011), depthWrite: true });
             blackHoleCore.add(new THREE.Mesh(new THREE.SphereGeometry(1.4, 64, 64), horizonMaterial));
             
@@ -655,7 +668,6 @@
             const photonRing = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.05, 32, 128), photonRingMaterial);
             photonRing.rotation.x = Math.PI / 2; blackHoleCore.add(photonRing); allHoleMaterials.push(photonRingMaterial);
 
-            // Partículas de distorsión
             const distortionCount = 800, distortionPositions = new Float32Array(distortionCount * 3);
             for (let i = 0; i < distortionCount * 3; i += 3) {
                 const angle = Math.random() * Math.PI * 2, radius = 1.6 + Math.random() * 3.5, height = (Math.random() - 0.5) * 1.2;
@@ -720,7 +732,6 @@
                 }
             });
 
-            // --- ESTRELAS 3D (color modificable) ---
             function createDistantStars() {
                 const g = new THREE.BufferGeometry(), count = 5000, pos = new Float32Array(count * 3);
                 for (let i = 0; i < count * 3; i += 3) {
@@ -734,7 +745,6 @@
             }
             const stars3D = createDistantStars();
 
-            // --- NEBULOSAS (color modificable) ---
             function createNebula(color, opacity, count, spread, hSpread) {
                 const g = new THREE.BufferGeometry(), pos = new Float32Array(count * 3);
                 for (let i = 0; i < count * 3; i += 3) {
@@ -766,7 +776,6 @@
                 const deltaTime = Math.min(0.1, elapsedTime - (animate.lastTime || elapsedTime));
                 animate.lastTime = elapsedTime;
 
-                // Interpolar colores
                 const lerpFactor = deltaTime * 0.8;
                 currentHoleColor.lerp(new THREE.Color(targetHoleColorHex), lerpFactor);
                 currentParticleColor.lerp(new THREE.Color(targetParticleColorHex), lerpFactor);
@@ -776,7 +785,6 @@
                 currentSpeedMult += (targetSpeedMult - currentSpeedMult) * lerpFactor;
                 currentCamSpeed += (targetCamSpeed - currentCamSpeed) * lerpFactor;
                 
-                // Aplicar colores
                 allHoleMaterials.forEach(mat => { mat.color.copy(currentHoleColor); mat.emissive.copy(currentHoleColor).multiplyScalar(0.4); });
                 pointLight.color.copy(currentHoleColor);
                 distortionParticlesMat.color.copy(currentParticleColor);
@@ -785,8 +793,8 @@
                 
                 controls.autoRotateSpeed = currentCamSpeed;
 
-                backgroundImage.lookAt(camera.position);
-                backgroundImage.position.copy(camera.position.clone().add(new THREE.Vector3(0, 0, -30).applyQuaternion(camera.quaternion)));
+                // Mostrar/ocultar imagen
+                imageGroup.visible = imageVisible;
 
                 // Latido
                 blackHoleCore.scale.setScalar(1.5 * (1 + Math.sin(elapsedTime * 0.5) * 0.06));
